@@ -257,7 +257,7 @@ class App extends React.Component {
                   <Select
                     mode="multiple"
                     style={{ width: '100%' }}
-                    placeholder="Furniture Style"
+                    placeholder="Select Furniture Style"
                     onChange={this.onFilterFurnitureStyle}
                   >
                     <Option key="Classic">Classic</Option>
@@ -272,7 +272,7 @@ class App extends React.Component {
                   <Select
                     mode="multiple"
                     style={{ width: '100%' }}
-                    placeholder="Delivery Days"
+                    placeholder="Select Delivery Days"
                     onChange={this.onFilterDeliveryDays}
                   >
                     <Option key={'{"start":0, "end":7}'}>1 Week</Option>
