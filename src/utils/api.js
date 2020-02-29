@@ -2,7 +2,7 @@ import axios from 'axios';
 
 class Services {
   constructor() {
-    this.baseUrl = 'http://www.mocky.io/v2/';
+    this.baseUrl = 'https://www.mocky.io/v2/';
   }
 
   get(params) {
