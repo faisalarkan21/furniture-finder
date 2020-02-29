@@ -1,9 +1,11 @@
-import { Card, Col, Input, PageHeader, Row, Select, Tag } from "antd";
-import numeral from "numeral";
-import React from "react";
-import "./App.css";
-import Services from "./utils/api";
-import truncate from "./utils/truncate";
+import {
+  Card, Col, Input, PageHeader, Row, Select, Tag,
+} from 'antd';
+import numeral from 'numeral';
+import React from 'react';
+import './App.css';
+import Services from './utils/api';
+import truncate from './utils/truncate';
 
 const { Meta } = Card;
 const { Option } = Select;
@@ -13,171 +15,228 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      searchInput: "",
+      searchInput: '',
       products: [],
       filterFurnitureStyle: [],
-      filterFurnitureStyle: [],
-      filterDeliveryDays: []
+      filterDeliveryDays: [],
     };
   }
 
+  // when component finish render we fetch into api
   componentDidMount() {
+    // fetch all data from api in one function
     this.handleFetch();
   }
 
   filterSearchInput = (dataFetch = []) => {
     const { searchInput } = this.state;
-
     let newList = [];
-    let currentList = [...dataFetch];
-    newList = currentList.filter(item => {
+    // do filter dataFetch with parameter from state searchInput
+    newList = dataFetch.filter((item) => {
       const lc = item.name.toLowerCase();
       const filter = searchInput.toLowerCase();
-      return lc.includes(filter);
+      return lc.includes(filter); // check if each item have filter value from input search
     });
 
     this.setState({
-      products: newList
+      products: newList,
     });
   };
 
   filterSelectStyle = (dataFetch = []) => {
-    let tempResultFoundFilter = [];
+    const tempResultFoundFilter = [];
     const { filterFurnitureStyle, products, searchInput } = this.state;
 
     if (!filterFurnitureStyle.length) {
       return;
     }
 
-    let tempDataFilter = searchInput ? products : dataFetch
+    /**
+     * checking if search input value is available
+     * if there is value, use state products instead
+     * it's allow for use multiple filter at same time
+     * but if not we using dataFetch from fetching api as default
+     */
+    const tempDataFilter = searchInput ? products : dataFetch;
 
-    tempDataFilter.forEach(v => {
-      const checkAllFounded = filterFurnitureStyle.every((x, i) =>
-        v.furniture_style.includes(x)
-      );
+    /**
+    * search with paramerter from filterFurnitureStyle search into data tempDataFilter
+    * using 'every' with filterFurnitureStyle for match exact the same value.
+    * if same we save it in tempResultFoundFilter and set it to state products
+    */
+    tempDataFilter.forEach((v) => {
+      const checkAllFounded = filterFurnitureStyle.every((x) => v.furniture_style.includes(x));
       if (checkAllFounded) {
         tempResultFoundFilter.push(v);
       }
     });
 
     this.setState({
-      products: tempResultFoundFilter
+      products: tempResultFoundFilter,
     });
   };
 
   filterSelectDelivery = (dataFetch = []) => {
-
-    const { filterDeliveryDays, products, searchInput, filterFurnitureStyle } = this.state;
+    const {
+      filterDeliveryDays, products, searchInput, filterFurnitureStyle,
+    } = this.state;
 
     if (!filterDeliveryDays.length) {
       return;
     }
 
-    const parseFilterDeliveryDays = filterDeliveryDays.map(x => JSON.parse(x));
-    let tempDataFilter = (filterFurnitureStyle.length || searchInput) ? products : dataFetch;
+    // Parsing all selected filter delivery days value from JSON String into JSON Array
+    const parseFilterDeliveryDays = filterDeliveryDays.map((x) => JSON.parse(x));
 
-    let tempResultFoundFilter = [];    
-    parseFilterDeliveryDays.map((x, i) => {
-      const result = tempDataFilter.filter(v => ((parseInt(v.delivery_time) <= x.end) && (parseInt(v.delivery_time) > x.start)));
-      tempResultFoundFilter.push(result)
-    })
+    /**
+     * checking if filterFurnitureStyle or searchInput empty if no, use state products
+     * it's allow for multiple search filter at same time.
+     */
+    const tempDataFilter = (filterFurnitureStyle.length || searchInput) ? products : dataFetch;
 
-    var tempMergedResultFilter = [].concat(...tempResultFoundFilter);
+    const tempResultFoundFilter = [];
+
+    // loop through array of filterFurnitureStyle
+    parseFilterDeliveryDays.forEach((x) => {
+      /**
+       * filter tempDataFilter with two condition
+       * if delivery_time is more than start and less than end object,
+       * than save it into tempResultFoundFilter
+       * v.delivery_time is String so we do parseInt in order able to compare it.
+       */
+      const result = tempDataFilter.filter((v) => ((parseInt(v.delivery_time, 10) > x.start) && (parseInt(v.delivery_time, 10) <= x.end)));
+
+      /**
+      * it's will produce new array items as many as parseFilterDeliveryDays length
+      * each array will contain search result from every multiple selected delivery days
+      * we need to merge it latter
+      */
+      tempResultFoundFilter.push(result);
+    });
+
+    // merge all result into one array items of object
+    const tempMergedResultFilter = [].concat(...tempResultFoundFilter);
 
     this.setState({
-      products: tempMergedResultFilter
+      products: tempMergedResultFilter,
     });
-
   };
 
-  handleFetch() {
-    new Services().get("5c9105cb330000112b649af8").then(({ products }) => {
 
-      if (
-        this.state.filterFurnitureStyle.length <= 0 &&
-        this.state.searchInput &&
-        this.state.filterDeliveryDays.length <= 0
-      ) {
-        this.setState({
-          products
-        });
-      }
-
-      this.filterSearchInput(products);
-      this.filterSelectStyle(products);
-      this.filterSelectDelivery(products);
-    });
-  }
-
-  onFilterFurnitureStyle = (value = "") => {
+  onFilterFurnitureStyle = (value = '') => {
     this.setState(
       {
-        filterFurnitureStyle: value
+        filterFurnitureStyle: value,
       },
       () => {
         this.handleFetch();
-      }
+      },
     );
   };
 
-  onFilterDeliveryDays = (value = "") => {
+  onFilterDeliveryDays = (value = '') => {
     this.setState(
       {
-        filterDeliveryDays: value
+        filterDeliveryDays: value,
       },
       () => {
         this.handleFetch();
-      }
+      },
     );
   };
 
-  onChangeFilterInput = e => {
+  onChangeFilterInput = (e) => {
     this.setState(
       {
-        searchInput: e.target.value
+        searchInput: e.target.value,
       },
       () => {
         this.handleFetch();
-      }
+      },
     );
   };
 
+  /**
+  * @function
+  * this function will always rerender according if any state is changed
+  * because we put it in render function.
+  */
   handleRenderCard = () => {
+    const {
+      products,
+    } = this.state;
+
+    // we will fill component inside componentCard.
     const componentCard = [];
-    this.state.products.map((v) => {
+
+    /**
+    * if state products changed we will rerender it
+    * do dynamic render add component into componentCard
+    * with value from stae products
+    */
+    products.forEach((v) => {
       componentCard.push(
         <Col flex={2} className="card" span={10}>
           <Card>
             <Meta
-              title={
+              title={(
                 <>
                   <div className="float-left">{v.name}</div>
                   <div className="float-right">
                     {`Rp. ${numeral(v.price).format()}`}
                   </div>
                 </>
-              }
-              description={
+              )}
+              description={(
                 <>
                   <div className="description">
                     {truncate(v.description, 114)}
                   </div>
                   <div className="float-left furniture-style">
-                    {v.furniture_style.map(v => {
-                      return <Tag color="blue">{v}</Tag>;
-                    })}
+                    {v.furniture_style.map((x) => <Tag color="blue">{x}</Tag>)}
                   </div>
                   <br />
                   <div className="float-right delivery">{`${v.delivery_time} Day`}</div>
                 </>
-              }
+              )}
             />
           </Card>
-        </Col>
+        </Col>,
       );
     });
     return componentCard;
   };
+
+  handleFetch() {
+    const {
+      filterDeliveryDays, searchInput, filterFurnitureStyle,
+    } = this.state;
+
+    // fetch all data from api in one function
+    new Services().get('5c9105cb330000112b649af8').then(({ products }) => {
+      /**
+      *  checking all filter if all state value is empty we block it and return result fetch
+      *  without any proccess in filter and set it into products state
+      */
+      if ((filterFurnitureStyle.length <= 0)
+        && (!searchInput)
+        && (filterDeliveryDays.length <= 0)
+      ) {
+        this.setState({
+          products,
+        });
+        return;
+      }
+
+      // do filter by search input with fetching result
+      this.filterSearchInput(products);
+      // do filter by multi select style products
+      this.filterSelectStyle(products);
+      // do filter by multi select delivery time
+      this.filterSelectDelivery(products);
+    });
+  }
+
 
   render() {
     return (
@@ -197,7 +256,7 @@ class App extends React.Component {
                 <Col span={12}>
                   <Select
                     mode="multiple"
-                    style={{ width: "100%" }}
+                    style={{ width: '100%' }}
                     placeholder="Furniture Style"
                     onChange={this.onFilterFurnitureStyle}
                   >
@@ -212,13 +271,13 @@ class App extends React.Component {
                 <Col span={12}>
                   <Select
                     mode="multiple"
-                    style={{ width: "100%" }}
+                    style={{ width: '100%' }}
                     placeholder="Delivery Days"
                     onChange={this.onFilterDeliveryDays}
                   >
-                    <Option key={`{"start":0, "end":7}`}>1 Week</Option>
-                    <Option key={`{"start":7, "end":14}`}>2 weeks</Option>
-                    <Option key={`{"start":14, "end":30}`}>1 month</Option>
+                    <Option key={'{"start":0, "end":7}'}>1 Week</Option>
+                    <Option key={'{"start":7, "end":14}'}>2 weeks</Option>
+                    <Option key={'{"start":14, "end":30}'}>1 month</Option>
                   </Select>
                 </Col>
               </Row>
@@ -226,6 +285,7 @@ class App extends React.Component {
           </Col>
         </Row>
         <Row className="container" type="flex">
+          {/* do render in separate function */}
           {this.handleRenderCard()}
         </Row>
       </div>
